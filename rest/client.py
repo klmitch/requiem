@@ -20,7 +20,7 @@ class RESTClient(object):
 
     _req_class = request.HTTPRequest
 
-    def __init__(self, baseurl, headers=None, debug=False):
+    def __init__(self, baseurl, headers=None, debug=None):
         """Initialize a REST client API.
 
         The baseurl specifies the base URL for the REST service.  If
@@ -28,18 +28,22 @@ class RESTClient(object):
         headers to set on every request.  Beware of name clashes in
         the keys of headers; header names are considered in a
         case-insensitive manner.
+
+        Debugging output can be enabled by passing a stream as the
+        debug parameter.  If True is passed instead, sys.stderr will
+        be used.
         """
 
         # Initialize an API client
         self._baseurl = baseurl
         self._headers = hdrs.HeaderDict(headers)
-        self._debug_mode = debug
+        self._debug_stream = sys.stderr if debug is True else debug
 
     def _debug(self, msg, *args, **kwargs):
         """Emit debugging messages."""
 
         # Do nothing if debugging is disabled
-        if not self._debug_mode:
+        if self._debug_stream is None or self._debug_stream is False:
             return
 
         # What are we passing to the format?
@@ -49,7 +53,7 @@ class RESTClient(object):
             fmtargs = args
 
         # Emit the message
-        print >>sys.stderr, msg % fmtargs
+        print >>self._debug_stream, msg % fmtargs
 
     def _make_req(self, method, url, headers=None):
         """Create a request object for the specified method and url."""

@@ -80,10 +80,14 @@ class RESTClient(object):
         for hdr, value in self._headers.items():
             # If it's a callable, call it
             if callable(value):
-                hset[hdr] = value()
+                value = value()
             else:
                 # OK, just stringify it
-                hset[hdr] = str(value)
+                value = str(value)
+
+            # If it's meaningful, attach it
+            if value:
+                hset[hdr] = value
 
         # Were headers passed in?
         if headers is not None:

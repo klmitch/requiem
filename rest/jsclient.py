@@ -41,9 +41,6 @@ class JSONRequest(request.HTTPRequest):
     def proc_response(self, resp):
         """Process JSON data found in the response."""
 
-        # Suck in the body
-        resp.body = resp.read()
-
         # Try to interpret any JSON
         try:
             resp.obj = json.loads(resp.body)

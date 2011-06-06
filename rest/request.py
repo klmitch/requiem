@@ -161,6 +161,10 @@ class HTTPRequest(object):
             self._debug("  Received %d response (%r)", resp.status,
                         resp.reason)
 
+            # Suck in the body, so we'll be able to re-use this
+            # connection
+            resp.body = resp.read()
+
             # Do any processing on the response that's desired
             self.proc_response(resp)
 

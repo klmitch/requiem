@@ -22,11 +22,11 @@ server bound to the resource "http://example.com/echo" that returns
 any object that is POSTed to it.  A full client for this server may
 be:
 
-    import rest
-    from rest import jsclient
+    import requiem
+    from requiem import jsclient
 
     class EchoClient(jsclient.JSONClient):
-        @restmethod('POST', '/echo')
+        @requiem.restmethod('POST', '/echo')
         def echo(self, req, obj):
             self._attach_obj(req, obj)
             return req.send().obj
@@ -43,8 +43,8 @@ See the documentation for JSONClient for more information.
 
 import json
 
-from rest import client
-from rest import request
+from requiem import client
+from requiem import request
 
 
 __all__ = ['JSONRequest', 'JSONClient']

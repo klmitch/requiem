@@ -18,13 +18,13 @@
 from distutils.core import setup
 
 setup(
-    name='Rest',
+    name='Requiem',
     version='0.1',
     description="REST Client Constructor",
     author="Kevin L. Mitchell",
     author_email="kevin.mitchell@rackspace.com",
-    url="http://github.com/klmitch/rest",
-    packages=['rest'],
+    url="http://github.com/klmitch/requiem",
+    packages=['requiem'],
     license="LICENSE.txt",
     long_description=open('README.rst').read(),
     classifiers=[

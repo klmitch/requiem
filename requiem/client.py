@@ -15,8 +15,8 @@
 
 import sys
 
-from rest import headers as hdrs
-from rest import request
+from requiem import headers as hdrs
+from requiem import request
 
 
 __all__ = ['RESTClient']

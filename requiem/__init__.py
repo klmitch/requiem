@@ -24,9 +24,9 @@ values.  As an example, let's assume we have a REST server bound to
 the resource "http://example.com/hello" that returns "world" in
 response to a GET.  A full client for this server may be:
 
-    import rest
+    import requiem
 
-    class HelloClient(rest.RESTClient):
+    class HelloClient(requiem.RESTClient):
         @restmethod('GET', '/hello')
         def hello(self, req):
             resp = req.send()
@@ -46,11 +46,11 @@ the documentation for @restmethod() itself.
 
 
 # Import everything
-from rest import client
-from rest import decorators
-from rest import exceptions
-from rest import headers
-from rest import request
+from requiem import client
+from requiem import decorators
+from requiem import exceptions
+from requiem import headers
+from requiem import request
 
 
 # Build up our __all__ and import all the symbols

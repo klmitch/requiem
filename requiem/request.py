@@ -16,8 +16,8 @@
 import httplib
 import urlparse
 
-from rest import exceptions as exc
-from rest import headers as hdrs
+from requiem import exceptions as exc
+from requiem import headers as hdrs
 
 
 __all__ = ['HTTPRequest']

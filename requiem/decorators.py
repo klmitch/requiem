@@ -18,7 +18,7 @@ import inspect
 import urllib
 import urlparse
 
-from rest import headers as hdrs
+from requiem import headers as hdrs
 
 
 __all__ = ['restmethod']

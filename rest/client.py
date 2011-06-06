@@ -58,19 +58,25 @@ class RESTClient(object):
     def _make_req(self, method, url, headers=None):
         """Create a request object for the specified method and url."""
 
-        # Were headers specified?
-        if headers is not None:
-            # Create a copy of our global headers...
-            hdrs = self._headers.copy()
+        # Build up headers
+        hset = hdrs.HeaderDict()
 
+        # Walk through our global headers
+        for hdr, value in self._headers.items():
+            # If it's a callable, call it
+            if callable(value):
+                hset[hdr] = value()
+            else:
+                # OK, just stringify it
+                hset[hdr] = str(value)
+
+        # Were headers passed in?
+        if headers is not None:
             # Update from specified headers
-            hdrs.update(headers)
-        else:
-            # Use our global headers...
-            hdrs = self._headers
+            hset.update(headers)
 
         # Hook method to instantiate requests
         self._debug("Creating request %s.%s(%r, %r, headers=%r)",
                     self._req_class.__module__, self._req_class.__name__,
-                    method, url, hdrs)
+                    method, url, hset)
         return self._req_class(method, url, headers=hdrs, debug=self._debug)

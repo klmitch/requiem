@@ -98,4 +98,4 @@ class RESTClient(object):
         self._debug("Creating request %s.%s(%r, %r, headers=%r)",
                     self._req_class.__module__, self._req_class.__name__,
                     method, url, hset)
-        return self._req_class(method, url, headers=hdrs, debug=self._debug)
+        return self._req_class(method, url, headers=hset, debug=self._debug)

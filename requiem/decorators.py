@@ -223,7 +223,8 @@ def restmethod(method, reluri, *qargs, **headers):
                     hlist = None
 
             # Now, build the request and pass it to the method
-            argmap[req_name] = theSelf._make_req(method, url, hlist)
+            argmap[req_name] = theSelf._make_req(method, url,
+                                                 func.__name__, hlist)
 
             # Call the method
             return func(**argmap)

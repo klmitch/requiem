@@ -70,7 +70,7 @@ class RESTClient(object):
         # Emit the message
         print >>self._debug_stream, msg % fmtargs
 
-    def _make_req(self, method, url, headers=None):
+    def _make_req(self, method, url, methname, headers=None):
         """Create a request object for the specified method and url."""
 
         # Build up headers
@@ -80,7 +80,7 @@ class RESTClient(object):
         for hdr, value in self._headers.items():
             # If it's a callable, call it
             if callable(value):
-                value = value()
+                value = value(methname)
             else:
                 # OK, just stringify it
                 value = str(value)

@@ -13,9 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import httplib
-import urlparse
-
 from requiem import exceptions as exc
 from requiem import headers as hdrs
 
@@ -30,36 +27,14 @@ class HTTPRequest(object):
     (headers can also be accessed directly at the 'headers' attribute)
     and the stream protocol to build up the body.  Handles
     redirections under control of the class attribute 'max_redirects'.
-    Understands the 'http' and 'https' schemes; additional schemes can
-    be supported by adding them to the 'schemes' dictionary--values
-    should be callables that take a network location ("host:port") and
-    return an object compatible with httplib.HTTPConnection.
+    Understands schemes supported by the specified client, which must
+    be compatible with the httplib2.Http object.
     """
 
-    _connect_cache = {}
-
     max_redirects = 10
-    schemes = {
-        'http': httplib.HTTPConnection,
-        'https': httplib.HTTPSConnection,
-        }
 
-    @classmethod
-    def _open(cls, scheme, netloc):
-        """Open a connection using specified scheme and netloc."""
-
-        # See if this connection is already present
-        if (scheme, netloc) in cls._connect_cache:
-            return cls._connect_cache[(scheme, netloc)]
-
-        # Open a connection for the given scheme and netloc
-        connect = cls.schemes[scheme](netloc)
-
-        # Cache the connection and return it
-        cls._connect_cache[(scheme, netloc)] = connect
-        return connect
-
-    def __init__(self, method, url, body=None, headers=None, debug=None):
+    def __init__(self, method, url, client,
+                 body=None, headers=None, debug=None):
         """Initialize a request.
 
         The method and url must be specified.  The body and headers
@@ -70,6 +45,7 @@ class HTTPRequest(object):
         # Save the relevant data
         self.method = method.upper()
         self.url = url
+        self.client = client
         self.body = body or ''
         self.headers = hdrs.HeaderDict()
         self._debug = debug or (lambda *args, **kwargs: None)
@@ -78,18 +54,7 @@ class HTTPRequest(object):
         if headers:
             self.headers.update(headers)
 
-        # Split up the URL for later use
-        tmp = urlparse.urlparse(url)
-
-        # Save scheme and netloc
-        self.scheme = tmp.scheme
-        self.netloc = tmp.netloc
-
-        # Now determine just the path
-        self.path = urlparse.urlunparse((None, None) + tmp[2:])
-
-        self._debug("Initialized %r request for %r (%r)",
-                    self.scheme, self.netloc, self.path)
+        self._debug("Initialized %r request for %r", self.method, self.url)
 
     def write(self, data):
         """Write data to the body."""
@@ -108,10 +73,9 @@ class HTTPRequest(object):
     def send(self):
         """Issue the request.
 
-        Handles redirects 301, 302, 303, and 307, if encountered.
-        Returns an httplib.HTTPResponse, which may be augmented by the
-        proc_response() method.  If a redirect loop is encountered, a
-        RESTException is raised.
+        Uses httplib2.Http support for handling redirects.  Returns an
+        httplib2.Response, which may be augmented by the
+        proc_response() method.
 
         Note that the default implementation of proc_response() causes
         an appropriate exception to be raised if the response code is
@@ -121,74 +85,18 @@ class HTTPRequest(object):
         self._debug("Sending %r request to %r (body %r, headers %r)",
                     self.method, self.url, self.body, self.headers)
 
-        # Get the basic initial information we need
-        connect = self._open(self.scheme, self.netloc)
-        path = self.path
-        url = self.url
+        # Issue the request
+        (resp, content) = self.client(self.url, self.method, self.body,
+                                      self.headers, self.max_redirects)
 
-        # Watch out for looping redirects
-        seen = set([url])
+        # Save the body in the response
+        resp.body = content
 
-        # Now, loop for redirection handling
-        for i in range(self.max_redirects):
-            self._debug("  Trying %r...", url)
+        # Do any processing on the response that's desired
+        self.proc_response(resp)
 
-            # Make the request
-            connect.request(self.method, path, self.body, self.headers)
-
-            # Get the response
-            resp = connect.getresponse()
-
-            # Is the response a redirection?
-            newurl = None
-            if resp.status in (301, 302, 303, 307):
-                # Find the forwarding header...
-                if 'location' in resp.msg:
-                    newurl = resp.getheader('location')
-                elif 'uri' in resp.msg:
-                    newurl = resp.getheader('uri')
-
-            # Process the redirection
-            if newurl is not None:
-                # Canonicalize the URL
-                url = urlparse.urljoin(url, newurl)
-
-                self._debug("  Redirected to %s", url)
-
-                # Have we seen it before?
-                if url in seen:
-                    self._debug("    Redirection already seen!")
-                    break
-
-                # Well, now we have...
-                seen.add(url)
-
-                # Get the path part of the URL
-                tmp = urlparse.urlparse(url)
-                path = urlparse.urlunparse((None, None) + tmp[2:])
-
-                # Get the connection
-                connect = self._open(tmp.scheme, tmp.netloc)
-
-                # Try the request again
-                continue
-
-            self._debug("  Received %d response (%r)", resp.status,
-                        resp.reason)
-
-            # Suck in the body, so we'll be able to re-use this
-            # connection
-            resp.body = resp.read()
-
-            # Do any processing on the response that's desired
-            self.proc_response(resp)
-
-            # Return the response
-            return resp
-
-        # Exceeded the maximum number of redirects
-        self._debug("  Redirect loop detected")
-        raise exc.RESTException("Redirect loop detected")
+        # Return the response
+        return resp
 
     def proc_response(self, resp):
         """Process response hook.

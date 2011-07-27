@@ -15,6 +15,8 @@
 
 import sys
 
+import httplib2
+
 from requiem import headers as hdrs
 from requiem import request
 
@@ -31,11 +33,17 @@ class RESTClient(object):
     request class to use can be overridden by changing the
     '_req_class' class attribute or by overriding the _make_req()
     method.
+
+    The HTTPRequest object additionally needs an
+    httplib2.Http-compatible client object, which may be provided by
+    passing the 'client' keyword argument to the RESTClient
+    constructor.  If no client is provided, a basic one will be
+    allocated.
     """
 
     _req_class = request.HTTPRequest
 
-    def __init__(self, baseurl, headers=None, debug=None):
+    def __init__(self, baseurl, headers=None, debug=None, client=None):
         """Initialize a REST client API.
 
         The baseurl specifies the base URL for the REST service.  If
@@ -53,6 +61,7 @@ class RESTClient(object):
         self._baseurl = baseurl
         self._headers = hdrs.HeaderDict(headers)
         self._debug_stream = sys.stderr if debug is True else debug
+        self._client = client or httplib2.Http()
 
     def _debug(self, msg, *args, **kwargs):
         """Emit debugging messages."""
@@ -98,4 +107,5 @@ class RESTClient(object):
         self._debug("Creating request %s.%s(%r, %r, headers=%r)",
                     self._req_class.__module__, self._req_class.__name__,
                     method, url, hset)
-        return self._req_class(method, url, headers=hset, debug=self._debug)
+        return self._req_class(method, url, self._client,
+                               headers=hset, debug=self._debug)

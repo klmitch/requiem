@@ -10,9 +10,9 @@ decorated method to be passed an additional argument (after the "self"
 argument): an HTTPRequest object.  The method may then manipulate
 request headers and the body of the request, then use the send()
 method on the HTTPRequest object to issue the request.  The return
-value of the send() method will be an httplib.HTTPResponse object,
-which can then be interpreted.  If the response is a redirection, the
-redirection will be followed; if the response is an error (status code
+value of the send() method will be an httplib2.Response object, which
+can then be interpreted.  If the response is a redirection, httplib2
+will follow the redirection; if the response is an error (status code
 400 or greater), an exception is raised.
 
 JSON-based Clients

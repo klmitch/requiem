@@ -15,12 +15,12 @@
 
 """Straight-forward JSON REST client construction.
 
-This module extends the base REST infrastructure of the rest package
-by providing a JSONClient class, to support REST-based protocols that
-use JSON-serialized data.  As an example, let's assume we have a REST
-server bound to the resource "http://example.com/echo" that returns
-any object that is POSTed to it.  A full client for this server may
-be:
+This module extends the base REST infrastructure of the requiem
+package by providing a JSONClient class, to support REST-based
+protocols that use JSON-serialized data.  As an example, let's assume
+we have a REST server bound to the resource "http://example.com/echo"
+that returns any object that is POSTed to it.  A full client for this
+server may be:
 
     import requiem
     from requiem import jsclient
@@ -80,11 +80,11 @@ class JSONClient(client.RESTClient):
     _req_class = JSONRequest
     _content_type = 'application/json'
 
-    def __init__(self, baseurl, headers=None, debug=False):
+    def __init__(self, baseurl, headers=None, debug=False, client=None):
         """Override RESTClient.__init__() to set an Accept header."""
 
         # Initialize superclass
-        super(JSONClient, self).__init__(baseurl, headers, debug)
+        super(JSONClient, self).__init__(baseurl, headers, debug, client)
 
         # Set the accept header
         self._headers.setdefault('accept', self._content_type)

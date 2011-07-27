@@ -26,6 +26,17 @@ class RESTException(Exception):
     pass
 
 
+class ShortCircuit(RESTException):
+    """Class for short-circuiting from a request processor to a response."""
+
+    def __init__(self, response):
+        """Initializes exception, attaching response."""
+
+        super(ShortCircuit, self).__init__("Short circuit.")
+
+        self.response = response
+
+
 class HTTPException(RESTException):
     """Superclass of exceptions raised if an error status is returned."""
 

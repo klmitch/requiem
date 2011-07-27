@@ -50,12 +50,13 @@ from requiem import client
 from requiem import decorators
 from requiem import exceptions
 from requiem import headers
+from requiem import processor
 from requiem import request
 
 
 # Build up our __all__ and import all the symbols
 __all__ = []
-for _mod in (client, decorators, exceptions, headers, request):
+for _mod in (client, decorators, exceptions, headers, processor, request):
     for _sym in _mod.__all__:
         vars()[_sym] = getattr(_mod, _sym)
     __all__ += _mod.__all__

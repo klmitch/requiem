@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import sys
+
 from requiem import exceptions as exc
 from requiem import headers as hdrs
 
@@ -33,7 +35,7 @@ class HTTPRequest(object):
 
     max_redirects = 10
 
-    def __init__(self, method, url, client,
+    def __init__(self, method, url, client, procstack,
                  body=None, headers=None, debug=None):
         """Initialize a request.
 
@@ -46,6 +48,7 @@ class HTTPRequest(object):
         self.method = method.upper()
         self.url = url
         self.client = client
+        self.procstack = procstack
         self.body = body or ''
         self.headers = hdrs.HeaderDict()
         self._debug = debug or (lambda *args, **kwargs: None)
@@ -82,6 +85,15 @@ class HTTPRequest(object):
         >= 400.
         """
 
+        # Pre-process the request
+        try:
+            self.procstack.proc_request(self)
+        except exc.ShortCircuit, e:
+            self._debug("Request pre-processing short-circuited")
+
+            # Short-circuited; we have an (already processed) response
+            return e.response
+
         self._debug("Sending %r request to %r (body %r, headers %r)",
                     self.method, self.url, self.body, self.headers)
 
@@ -93,10 +105,20 @@ class HTTPRequest(object):
         resp.body = content
 
         # Do any processing on the response that's desired
-        self.proc_response(resp)
+        try:
+            self.proc_response(resp)
+        except:
+            # Process the exception
+            result = self.procstack.proc_exception(*sys.exc_info())
+            if not result:
+                # Not handled, re-raise it
+                raise
+            else:
+                # Handled and we have a fully post-processed response
+                return result
 
-        # Return the response
-        return resp
+        # Return the response, post-processing it
+        return self.procstack.proc_response(resp)
 
     def proc_response(self, resp):
         """Process response hook.

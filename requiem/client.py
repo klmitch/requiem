@@ -18,6 +18,7 @@ import sys
 import httplib2
 
 from requiem import headers as hdrs
+from requiem import processor
 from requiem import request
 
 
@@ -62,6 +63,7 @@ class RESTClient(object):
         self._headers = hdrs.HeaderDict(headers)
         self._debug_stream = sys.stderr if debug is True else debug
         self._client = client or httplib2.Http()
+        self._procstack = processor.ProcessorStack()
 
     def _debug(self, msg, *args, **kwargs):
         """Emit debugging messages."""
@@ -78,6 +80,32 @@ class RESTClient(object):
 
         # Emit the message
         print >>self._debug_stream, msg % fmtargs
+
+    def _push_processor(self, proc, index=None):
+        """
+        Pushes a processor onto the processor stack.  Processors are
+        objects with proc_request(), proc_response(), and/or
+        proc_exception() methods, which can intercept requests,
+        responses, and exceptions.  When a method invokes the send()
+        method on a request, the proc_request() method on each
+        processor is called in turn.  Likewise, responses are
+        processed by the proc_response() method of each processor, in
+        the reverse order of the calls to proc_request().  The
+        proc_exception() methods are called if an exception is raised
+        instead of a response being returned.
+
+        Note that this method can append a processor to the stack, if
+        the index parameter is None (the default), or a processor may
+        be inserted into the stack by specifying an integer index.
+
+        For more information about processors, see the
+        requiem.Processor class.
+        """
+
+        if index is None:
+            self._procstack.append(proc)
+        else:
+            self._procstack.insert(index, proc)
 
     def _make_req(self, method, url, methname, headers=None):
         """Create a request object for the specified method and url."""
@@ -107,5 +135,5 @@ class RESTClient(object):
         self._debug("Creating request %s.%s(%r, %r, headers=%r)",
                     self._req_class.__module__, self._req_class.__name__,
                     method, url, hset)
-        return self._req_class(method, url, self._client,
+        return self._req_class(method, url, self._client, self._procstack,
                                headers=hset, debug=self._debug)

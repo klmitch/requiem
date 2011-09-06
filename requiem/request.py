@@ -98,8 +98,9 @@ class HTTPRequest(object):
                     self.method, self.url, self.body, self.headers)
 
         # Issue the request
-        (resp, content) = self.client(self.url, self.method, self.body,
-                                      self.headers, self.max_redirects)
+        (resp, content) = self.client.request(self.url, self.method,
+                                              self.body, self.headers,
+                                              self.max_redirects)
 
         # Save the body in the response
         resp.body = content

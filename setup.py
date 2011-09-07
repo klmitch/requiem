@@ -19,7 +19,7 @@ from distutils.core import setup
 
 setup(
     name='Requiem',
-    version='0.2',
+    version='0.2.1',
     description="REST Client Constructor",
     author="Kevin L. Mitchell",
     author_email="kevin.mitchell@rackspace.com",
